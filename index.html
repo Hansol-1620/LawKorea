@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대한민국 법제처 법령정보센터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 아코디언 애니메이션용 부드러운 효과 */
+        .accordion-content { transition: max-height 0.3s ease-out; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🏛️</span>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide text-white">법제처 법령정보센터</h1>
+                    <p class="text-xs text-gray-400">대한민국 및 자매결연 도시 법령 통합 포털</p>
+                </div>
+            </div>
+            <span class="bg-blue-600 text-xs px-2.5 py-1 rounded-full font-semibold text-white">🔒 보안운영 모드</span>
+        </div>
+    </header>
+
+    <div class="bg-red-900/40 border-b border-red-700 text-red-200 text-xs py-2 px-4 text-center font-medium">
+        ⚠️ 모든 자치도시의 개별 법령은 대한민국의 최상위 규범(헌법/정관)을 위반할 수 없습니다. [국가법 우위 원칙]
+    </div>
+
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        
+        <section class="mb-6">
+            <h2 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">소속 지역 선택</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="tab-container">
+                </div>
+        </section>
+
+        <section class="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-6">
+            <h3 class="text-base font-bold text-blue-400" id="city-title">지역을 선택해 주세요</h3>
+            <p class="text-sm text-gray-400 mt-1" id="city-desc">-</p>
+        </section>
+
+        <section>
+            <h2 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">해당 지역 법령 목차</h2>
+            <div class="space-y-3" id="laws-container">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        let lawData = {};
+
+        // 1. data.json 파일 로드하기
+        async function loadLaws() {
+            try {
+                const response = await fetch('data.json');
+                lawData = await response.json();
+                
+                // 데이터 로드가 완료되면 초기 화면 렌더링 (기본값: 대한민국 본부)
+                renderTabs();
+                switchCity('hq');
+            } catch (error) {
+                console.error("법령 데이터를 불러오는 중 오류 발생:", error);
+                document.getElementById('laws-container').innerHTML = 
+                    `<p class="text-red-400 text-center py-8">❌ 법령 데이터를 로드하지 못했습니다. 관리자에게 문의하세요.</p>`;
+            }
+        }
+
+        // 2. 상단 지역 선택 탭 버튼 생성
+        function renderTabs() {
+            const container = document.getElementById('tab-container');
+            container.innerHTML = '';
+
+            Object.keys(lawData).forEach(key => {
+                const city = lawData[key];
+                const button = document.createElement('button');
+                button.id = `tab-${key}`;
+                button.className = `py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center ${
+                    key === 'hq' 
+                    ? 'bg-blue-600 border-blue-500 text-white' 
+                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                }`;
+                button.innerText = city.name;
+                button.onclick = () => switchCity(key);
+                container.appendChild(button);
+            });
+        }
+
+        // 3. 탭 클릭 시 지역 전환 활성화
+        function switchCity(cityKey) {
+            // 모든 탭 스타일 초기화
+            Object.keys(lawData).forEach(key => {
+                const btn = document.getElementById(`tab-${key}`);
+                if (btn) {
+                    btn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700";
+                }
+            });
+
+            // 선택된 탭 하이라이트 활성화
+            const activeBtn = document.getElementById(`tab-${cityKey}`);
+            if (activeBtn) {
+                activeBtn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-blue-600 border-blue-500 text-white";
+            }
+
+            // 상단 설명 갱신
+            const city = lawData[cityKey];
+            document.getElementById('city-title').innerText = city.name;
+            document.getElementById('city-desc').innerText = city.desc;
+
+            // 법령 아코디언 리스트 구성
+            const lawsContainer = document.getElementById('laws-container');
+            lawsContainer.innerHTML = '';
+
+            city.laws.forEach((law, index) => {
+                const lawCard = document.createElement('div');
+                lawCard.className = "bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm";
+                
+                lawCard.innerHTML = `
+                    <button class="w-full text-left p-4 flex justify-between items-center hover:bg-gray-750 focus:outline-none" onclick="toggleAccordion(${index})">
+                        <div>
+                            <span class="font-bold text-white text-base block">${law.title}</span>
+                            <span class="text-xs text-gray-400">${law.subtitle}</span>
+                        </div>
+                        <span class="text-gray-500 font-bold transition-transform duration-300" id="arrow-${index}">▼</span>
+                    </button>
+                    <div class="accordion-content max-h-0 bg-gray-850 border-t border-gray-750" id="content-${index}">
+                        <div class="p-4 text-sm text-gray-300 leading-relaxed space-y-3">
+                            ${law.content}
+                        </div>
+                    </div>
+                `;
+                lawsContainer.appendChild(lawCard);
+            });
+        }
+
+        // 4. 아코디언 열고 닫기 함수 (클릭 시 아래로 스무스하게 펼쳐짐)
+        function toggleAccordion(index) {
+            const content = document.getElementById(`content-${index}`);
+            const arrow = document.getElementById(`arrow-${index}`);
+
+            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                content.style.maxHeight = '0px';
+                arrow.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                arrow.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // 웹페이지 로드 시 즉시 가동
+        window.onload = loadLaws;
+    </script>
+</body>
+</html>
