@@ -6,7 +6,6 @@
     <title>대한민국 법제처 법령정보센터</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 아코디언 애니메이션용 부드러운 효과 */
         .accordion-content { transition: max-height 0.3s ease-out; overflow: hidden; }
     </style>
 </head>
@@ -30,11 +29,9 @@
     </div>
 
     <main class="max-w-4xl mx-auto px-4 py-6">
-        
         <section class="mb-6">
             <h2 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">소속 지역 선택</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="tab-container">
-                </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="tab-container"></div>
         </section>
 
         <section class="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-6">
@@ -44,80 +41,86 @@
 
         <section>
             <h2 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">해당 지역 법령 목차</h2>
-            <div class="space-y-3" id="laws-container">
-                </div>
+            <div class="space-y-3" id="laws-container"></div>
         </section>
-
     </main>
 
     <script>
-        let lawData = {};
+        // 📝 법령 데이터를 이 자리에 통합했습니다. 나중에 법을 고치려면 여기 텍스트만 수정하세요!
+        const lawData = {
+          "hq": {
+            "name": "대한민국 본부",
+            "desc": "대한민국 서버 전체에 적용되는 최상위 규정 및 표준 법령입니다.",
+            "laws": [
+              { "title": "📜 서버규정", "subtitle": "최상위 규정 (본부 전용)", "content": "<p><b>제1조 (목적)</b> 본 규정은 대한민국(Roblox) 커뮤니티의 질서 유지를 목적으로 한다.</p><p><b>제2조 (금지사항)</b> 서버를 테러하거나 운영을 방해하는 행위는 즉각 처러된다.</p>" },
+              { "title": "🏛️ 행정총회정관", "subtitle": "서버규정 하위 규정 (행정총회 전용)", "content": "<p><b>제1조 (목적)</b> 행정총회의 조직 구성과 직무 범위를 규정한다.</p><p><b>제2조 (권한의 한계)</b> 행정총회는 직접적인 관리 권한을 행사할 수 없다.</p>" },
+              { "title": "🛠️ 운영명령", "subtitle": "서버규정 보충 명령 (본부 전용)", "content": "<p><b>제1호</b> 홀더의 명령 권한으로 정관에서 위임한 세부 사항을 보충한다.</p>" },
+              { "title": "⚖️ 표준국가법령 (RP)", "subtitle": "공통 실무법", "content": "<p><b>[형법] 제1조</b> 타인의 재물을 손괴한 자는 처벌한다.</p><p><b>[도로교통법] 제1조</b> 무면허 운전을 금지한다.</p>" }
+            ]
+          },
+          "seoul": {
+            "name": "서울특별시 (직영)",
+            "desc": "본부 직영 지자체로, 표준국가법령을 따르며 자체 규정을 적용합니다.",
+            "laws": [
+              { "title": "📜 서울시 자체 서버규정", "subtitle": "지자체 자체 규정", "content": "<p><b>제1조</b> 서울특별시의 내부 질서와 유저 관리를 위한 전용 규정이다.</p>" },
+              { "title": "🛠️ 서울시 자체 운영명령", "subtitle": "시장령 / 자체 명령", "content": "<p><b>제1호</b> 서울시장이 발령하는 행정 보충 명령이다.</p>" },
+              { "title": "⚖️ 표준국가법령 (RP)", "subtitle": "공통 실무법 동기화", "content": "<p>※ 서울특별시는 대한민국의 <b>표준국가법령체계(형법, 도로교통법 등)</b>를 100% 동일하게 적용합니다.</p>" }
+            ]
+          },
+          "geumsan": {
+            "name": "금산군 (동맹)",
+            "desc": "자매결연 지자체로, 자체적인 자치 규정과 개별 도시 법령을 적용합니다.",
+            "laws": [
+              { "title": "🔰 금산군 자치규정", "subtitle": "자체 지자체 규정", "content": "<p><b>제1조</b> 금산군 커뮤니티의 운영과 소통을 위한 자치 규칙이다.</p>" },
+              { "title": "🌾 개별도시법령 (RP)", "subtitle": "금산군 자치조례", "content": "<p><b>[금산군 조례 제1조]</b> 금산군 내에서 행해지는 독자적 RP 활동 규정이다.</p>" }
+            ]
+          },
+          "bucheon": {
+            "name": "부천시 오정구 (동맹)",
+            "desc": "자매결연 지자체로, 자체적인 자치 규정과 개별 도시 법령을 적용합니다.",
+            "laws": [
+              { "title": "🔰 오정구 자치규정", "subtitle": "자체 지자체 규정", "content": "<p><b>제1조</b> 부천시 오정구의 원활한 운영을 위한 규칙이다.</p>" },
+              { "title": "🏙️ 개별도시법령 (RP)", "subtitle": "부천시 조례", "content": "<p><b>[부천시 조례 제1조]</b> 오정구 관할 지역에 적용되는 독자적 조례이다.</p>" }
+            ]
+          }
+        };
 
-        // 1. data.json 파일 로드하기
-        async function loadLaws() {
-            try {
-                const response = await fetch('data.json');
-                lawData = await response.json();
-                
-                // 데이터 로드가 완료되면 초기 화면 렌더링 (기본값: 대한민국 본부)
-                renderTabs();
-                switchCity('hq');
-            } catch (error) {
-                console.error("법령 데이터를 불러오는 중 오류 발생:", error);
-                document.getElementById('laws-container').innerHTML = 
-                    `<p class="text-red-400 text-center py-8">❌ 법령 데이터를 로드하지 못했습니다. 관리자에게 문의하세요.</p>`;
-            }
+        function init() {
+            renderTabs();
+            switchCity('hq');
         }
 
-        // 2. 상단 지역 선택 탭 버튼 생성
         function renderTabs() {
             const container = document.getElementById('tab-container');
             container.innerHTML = '';
-
             Object.keys(lawData).forEach(key => {
                 const city = lawData[key];
                 const button = document.createElement('button');
                 button.id = `tab-${key}`;
-                button.className = `py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center ${
-                    key === 'hq' 
-                    ? 'bg-blue-600 border-blue-500 text-white' 
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
-                }`;
+                button.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700";
                 button.innerText = city.name;
                 button.onclick = () => switchCity(key);
                 container.appendChild(button);
             });
         }
 
-        // 3. 탭 클릭 시 지역 전환 활성화
         function switchCity(cityKey) {
-            // 모든 탭 스타일 초기화
             Object.keys(lawData).forEach(key => {
                 const btn = document.getElementById(`tab-${key}`);
-                if (btn) {
-                    btn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700";
-                }
+                if (btn) btn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700";
             });
-
-            // 선택된 탭 하이라이트 활성화
             const activeBtn = document.getElementById(`tab-${cityKey}`);
-            if (activeBtn) {
-                activeBtn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-blue-600 border-blue-500 text-white";
-            }
+            if (activeBtn) activeBtn.className = "py-3 px-4 rounded-xl font-bold text-sm border transition shadow-sm text-center bg-blue-600 border-blue-500 text-white";
 
-            // 상단 설명 갱신
             const city = lawData[cityKey];
             document.getElementById('city-title').innerText = city.name;
             document.getElementById('city-desc').innerText = city.desc;
 
-            // 법령 아코디언 리스트 구성
             const lawsContainer = document.getElementById('laws-container');
             lawsContainer.innerHTML = '';
-
             city.laws.forEach((law, index) => {
                 const lawCard = document.createElement('div');
                 lawCard.className = "bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm";
-                
                 lawCard.innerHTML = `
                     <button class="w-full text-left p-4 flex justify-between items-center hover:bg-gray-750 focus:outline-none" onclick="toggleAccordion(${index})">
                         <div>
@@ -127,20 +130,16 @@
                         <span class="text-gray-500 font-bold transition-transform duration-300" id="arrow-${index}">▼</span>
                     </button>
                     <div class="accordion-content max-h-0 bg-gray-850 border-t border-gray-750" id="content-${index}">
-                        <div class="p-4 text-sm text-gray-300 leading-relaxed space-y-3">
-                            ${law.content}
-                        </div>
+                        <div class="p-4 text-sm text-gray-300 leading-relaxed space-y-3">${law.content}</div>
                     </div>
                 `;
                 lawsContainer.appendChild(lawCard);
             });
         }
 
-        // 4. 아코디언 열고 닫기 함수 (클릭 시 아래로 스무스하게 펼쳐짐)
         function toggleAccordion(index) {
             const content = document.getElementById(`content-${index}`);
             const arrow = document.getElementById(`arrow-${index}`);
-
             if (content.style.maxHeight && content.style.maxHeight !== '0px') {
                 content.style.maxHeight = '0px';
                 arrow.style.transform = 'rotate(0deg)';
@@ -150,8 +149,7 @@
             }
         }
 
-        // 웹페이지 로드 시 즉시 가동
-        window.onload = loadLaws;
+        window.onload = init;
     </script>
 </body>
 </html>
